@@ -7,9 +7,6 @@ public class MainApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
-
-
 //        primaryStage.setScene(new Scene());
         primaryStage.show();
     }

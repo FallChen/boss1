@@ -1,14 +1,20 @@
 package com.cy.service;
 
-import io.vertx.core.*;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.asyncsql.MySQLClient;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
+import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.StaticHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,12 +23,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MoreRouteService extends AbstractVerticle {
 
 
     private SQLClient sqlClient;
+
 //    private FreeMarkerTemplateEngine templateEngine;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreRouteService.class);
@@ -35,7 +43,6 @@ public class MoreRouteService extends AbstractVerticle {
     }
 
     private Future<Void> mainRoute() {
-        System.out.println(2);
         Promise<Void> promise = Promise.promise();
         HttpServer server = vertx.createHttpServer();   // <1>
 
@@ -43,18 +50,13 @@ public class MoreRouteService extends AbstractVerticle {
         router.get("/commn").handler(this::autoIncrement);
         router.get("/commn").handler(this::indexHandler);
         router.get("/html").handler(this::targetHtml);
-        router.route("/js/*").handler(this::jsTest);
-        router.route("/css/*").handler(this::cssTest);
-//        router.get("/js/t.js").handler(this::targetJs);
-
-//        router.get("/").handler(this::indexHandler);
-//        router.get("/wiki/:page").handler(this::pageRenderingHandler); // <3>
-//        router.post().handler(BodyHandler.create());  // <4>
-//        router.post("/save").handler(this::pageUpdateHandler);
-//        router.post("/create").handler(this::pageCreateHandler);
-//        router.post("/delete").handler(this::pageDeletionHandler);
-
-//        templateEngine = FreeMarkerTemplateEngine.create(vertx);
+        StaticHandler staticHandler = StaticHandler.create();
+        staticHandler.setWebRoot("static");
+        router.route("/static/*").handler(staticHandler);
+//        router.route("/static/test.html").handler(this::staticHtml);
+        router.route("/fileUpload").handler(this::fileUpload);
+//        router.route("/static/js/*").handler(this::jsTest);
+//        router.route("/css/*").handler(this::cssTest);
 
         server.requestHandler(router)   // <5>
                 .listen(8080, ar -> {   // <6>
@@ -68,6 +70,21 @@ public class MoreRouteService extends AbstractVerticle {
                 });
 
         return promise.future();
+    }
+
+    private void staticHtml(RoutingContext context) {
+        System.out.println("imok");
+        context.reroute(HttpMethod.GET, "/static/test.html");
+    }
+
+    private void fileUpload(RoutingContext context) {
+        System.out.println("iscon");
+        Set<FileUpload> fileUploads = context.fileUploads();
+        fileUploads.forEach(x->{
+            String s = x.fileName();
+            System.out.println(s);
+        });
+        context.response().end();
     }
 
     private void cssTest(RoutingContext context) {
@@ -109,34 +126,13 @@ public class MoreRouteService extends AbstractVerticle {
 //        context.response().end();
     }
 
-    private void targetJs(RoutingContext context) {
-
-
-        try (InputStream stream = MoreRouteService.class.getClassLoader().getResourceAsStream("js/t.js");
-             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream))) {
-            String temp ="";
-            StringBuilder all = new StringBuilder();
-            while ((temp=bufferedReader.readLine())!=null){
-                all.append(temp);
-            }
-            HttpServerResponse response = context.response();
-            context.response().putHeader("Content-Type", "application/javascript;charset=UTF-8");
-            response.end(all.toString()+"\r\n");
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-            context.fail(e);
-        }
-
-
-    }
-
     private Future<Void> getConntion() {
-        System.out.println(1);
         Promise<Void> promise = Promise.promise();
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("username", "root")
-//                .put("password", "chen123")
-                .put("password","Chen19951129]").put("database", "test");
+                .put("password", "chen123")
+//                .put("password","Chen19951129]")
+                .put("database", "test");
         sqlClient = MySQLClient.createShared(vertx, jsonObject);
         promise.complete();
         return promise.future();
@@ -144,7 +140,6 @@ public class MoreRouteService extends AbstractVerticle {
 
 
     private void autoIncrement(RoutingContext context){
-        System.out.println(4);
         sqlClient.getConnection(con ->{
            if(con.succeeded()){
                SQLConnection conn = con.result();
@@ -159,8 +154,8 @@ public class MoreRouteService extends AbstractVerticle {
            }
         });
     }
+
     private void indexHandler(RoutingContext context) {
-        System.out.println(3);
         sqlClient.getConnection(car -> {
             if (car.succeeded()) {
                 SQLConnection connection = car.result();
@@ -173,18 +168,11 @@ public class MoreRouteService extends AbstractVerticle {
                                 .map(json -> json.getString(1))
                                 .sorted()
                                 .collect(Collectors.toList());
-
-                        StringBuilder content = new StringBuilder();
-                        for (String str:pages
-                             ) {
-                            content.append(str+"<br/>");
-                        }
-                        System.out.println(content.toString());
-//                        context.put("title", "Wiki home");  // <2>
-//                        context.put("pages", pages);
-                        context.response().putHeader("Content-Type", "text/html");
-                        context.response().end("<html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Title</title></head><body>本网页已经累计访问过："+content.toString()+"次了！<script></script></body></html>");  // <4>
-
+                        JsonObject jsonObject = new JsonObject();
+                        jsonObject.put("key",pages);
+//                        context.response().putHeader("Content-Type", "text/html");
+                        context.response().putHeader("Content-Type", "application/json;charset=UTF-8");
+                        context.response().end(jsonObject.toBuffer());  // <4>
                     } else {
                         context.fail(res.cause());  // <5>
                     }
@@ -196,7 +184,7 @@ public class MoreRouteService extends AbstractVerticle {
     }
 
     private void targetHtml(RoutingContext context){
-        try (InputStream stream = MoreRouteService.class.getClassLoader().getResourceAsStream("test.html");
+        try (InputStream stream = MoreRouteService.class.getClassLoader().getResourceAsStream("static/test.html");
              BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream))) {
             String temp ="";
             StringBuilder all = new StringBuilder();
@@ -205,7 +193,6 @@ public class MoreRouteService extends AbstractVerticle {
             }
             HttpServerResponse response = context.response();
             context.response().putHeader("Content-Type", "text/html");
-            ;
             response.end(all.toString());
         } catch (IOException e) {
             LOGGER.error(e.getMessage());
@@ -215,6 +202,7 @@ public class MoreRouteService extends AbstractVerticle {
     }
 
     public static void main(String[] args) {
-        Vertx.vertx().deployVerticle(MoreRouteService.class.getName());
+        Vertx vertx = Vertx.vertx();
+        vertx.deployVerticle(MoreRouteService.class.getName());
     }
 }

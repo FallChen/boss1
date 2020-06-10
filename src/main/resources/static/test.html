@@ -50,10 +50,38 @@
         </tbody>
     </table>
 </div>
-
+<div class="col-md-12">
+    <span>本网页已经被访问了</span>
+    <!--<span class="label label-primary" id="kye2"></span>-->
+    <span class="label label-danger" id="key3"></span>
+    <span>次了！</span>
+</div>
+<div class="col-md-12">
+    <form action="fileUpload/" method="post" name="f_upload" enctype="multipart/form-data">
+        <input type="text" name="username" /><br>
+        <input type="file" name="filename" /><br>
+        <input type="submit" value="上传" />
+    </form>
+</div>
 <script>
+
+
+    $.ajax({
+        url:".././commn",
+        dataType:"json",
+        type:"get",
+        async:true,
+        data:{},
+        success:function(data){
+                $("#key3").append(data.key[0]);
+        },
+        error:function(){
+
+        }
+    });
+
     $("#key").click(function (v) {
-        alert("555");
+        $("#key3").html(20);
     })
 </script>
 </body>
