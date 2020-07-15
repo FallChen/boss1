@@ -30,9 +30,6 @@ public class MoreRouteService extends AbstractVerticle {
 
 
     private SQLClient sqlClient;
-
-//    private FreeMarkerTemplateEngine templateEngine;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreRouteService.class);
 
 
@@ -130,8 +127,8 @@ public class MoreRouteService extends AbstractVerticle {
         Promise<Void> promise = Promise.promise();
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("username", "root")
-                .put("password", "chen123")
-//                .put("password","Chen19951129]")
+//                .put("password", "chen123")
+                .put("password","Chen19951129]")
                 .put("database", "test");
         sqlClient = MySQLClient.createShared(vertx, jsonObject);
         promise.complete();
