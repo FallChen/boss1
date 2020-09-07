@@ -1,13 +1,13 @@
 package com.cy.page;
 
-import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.StrUtil;
 import org.junit.Test;
 
-import java.text.NumberFormat;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static junit.framework.TestCase.assertNull;
 
 
 public class CommonUtil {
@@ -74,6 +74,13 @@ public class CommonUtil {
 	public void  numberBlack(){
 		String format = String.format("%10s你觉得如何","\b");
 		System.out.println(format);
+	}
+
+	@Test
+	public void huToolTest(){
+		String ren = StrUtil.format("{}我的格尔咯咯咯", "ren");
+		System.out.println(ren);
+		assertNull(ren);
 	}
 
 }

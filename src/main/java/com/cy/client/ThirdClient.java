@@ -25,7 +25,7 @@ public class ThirdClient extends AbstractVerticle {
 	private Future<Void> mainStart() {
 		Promise<Void> promise = Promise.promise();
 		NetClient netClient = vertx.createNetClient();
-		netClient.connect(8888, "47.112.51.212", result -> {
+		netClient.connect(8888, "localhost", result -> {
 			boolean succeeded = result.succeeded();
 			if (succeeded) {
 				System.out.println("1已启动");
